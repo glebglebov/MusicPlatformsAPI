@@ -12,7 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AppleMusicApi\AppleMusicApi.csproj" />
     <ProjectReference Include="..\KMChartsUpdater.DAL\KMChartsUpdater.DAL.csproj" />
-    <ProjectReference Include="..\MooscleParser\MooscleParser.csproj" />
     <ProjectReference Include="..\SpotifyApi\SpotifyApi.csproj" />
     <ProjectReference Include="..\VkApi\VkApi.csproj" />
   </ItemGroup>
