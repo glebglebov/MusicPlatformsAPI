@@ -2,7 +2,6 @@
 using KMChartsUpdater.BLL.Responses;
 using KMChartsUpdater.DAL;
 using KMChartsUpdater.DAL.Entities;
-using MooscleParser;
 using System.Linq;
 
 namespace KMChartsUpdater.BLL.Services
@@ -21,17 +20,6 @@ namespace KMChartsUpdater.BLL.Services
             var query = _uow.AccessTokens.GetAll.FirstOrDefault(x => x.Token == token);
 
             return (query != null);
-        }
-
-        public void Pognali(int month, int days, int year)
-        {
-            Parser parser = new Parser(_uow);
-
-            for (int i = 1; i <= days; i++)
-            {
-                parser.ParseByDate(i, month, year);
-                //parser.ParseSpotify(i, month, year);
-            }
         }
 
         public GlobalStatsResponse GetGlobalStats()

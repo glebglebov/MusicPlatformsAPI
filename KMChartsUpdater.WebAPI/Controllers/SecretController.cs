@@ -51,18 +51,6 @@ namespace KMChartsUpdater.WebAPI.Controllers
             return new DoneResponse("ok");
         }
 
-        [HttpPost("pognali/{month}/{days}/{year}")]
-        public Response Post(int month, int days, int year, string token)
-        {
-            bool b = _securityService.CheckToken(token);
-            if (!b)
-                return new ErrorResponse("wrong");
-
-            _securityService.Pognali(month, days, year);
-
-            return new DoneResponse("ok");
-        }
-
         [HttpDelete("clean")]
         public Response Delete(string token)
         {

@@ -6,8 +6,6 @@ namespace KMChartsUpdater.BLL.Interfaces
     {
         bool CheckToken(string token);
 
-        void Pognali(int month, int days, int year);
-
         GlobalStatsResponse GetGlobalStats();
 
         Response CleanAudios();
