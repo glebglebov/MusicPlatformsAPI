@@ -5,6 +5,7 @@ using KMChartsUpdater.BLL.Charts;
 using KMChartsUpdater.BLL.DTO;
 using KMChartsUpdater.BLL.Infrastructure;
 using KMChartsUpdater.BLL.Interfaces;
+using KMChartsUpdater.BLL.ReportGenerator;
 using KMChartsUpdater.BLL.Responses;
 using KMChartsUpdater.BLL.Utils;
 using KMChartsUpdater.DAL;
@@ -176,36 +177,53 @@ namespace KMChartsUpdater.BLL.Services
 
         private Report CreateReport(AudioTask task, List<Playlist> playlists)
         {
+            string reportTitle = task.Audio.Artist + " - " + task.Audio.Title;
+            string reportSubtitle = DateTime.Now.ToString("dd.MM.yyyy");
+
+            var reportContent = new ReportContent
+            {
+                ReportTitle = reportTitle,
+                ReportSubtitle = reportSubtitle,
+                Groups = new List<ReportGroup>()
+            };
+
+            var platforms = _uow.Platforms.GetAll.ToList();
+
             string titleNormalized = task.Audio.TitleNormalized;
             string artistNormalized = task.Audio.ArtistNormalized;
 
-            List<PlaylistDto> result = new List<PlaylistDto>();
-
-            foreach (var playlist in playlists)
+            foreach (var platform in platforms)
             {
-                var audios = JsonConvert.DeserializeObject<List<PlaylistAudioDto>>(playlist.Tracks);
-
-                if (audios == null)
-                    continue;
-
-                var audio = audios.FirstOrDefault(x =>
-                    x.TitleNormalized == titleNormalized
-                    && Normalizer.ArtistEqual(artistNormalized, x.ArtistNormalized));
-
-                if (audio != null)
+                var group = new ReportGroup
                 {
-                    result.Add(new PlaylistDto
-                    {
-                        Position = audio.Position,
-                        Name = playlist.Name,
-                        Cover = playlist.Cover,
-                        Link = playlist.Link,
-                        //PlatformName = playlist.Platform.Name
-                    });
-                }
-            }
+                    Name = platform.Name,
+                    Elements = new List<ReportElement>()
+                };
 
-            string playlistsJson = JsonConvert.SerializeObject(result);
+                foreach (var playlist in platform.Playlists)
+                {
+                    var tracks = JsonConvert.DeserializeObject<List<PlaylistAudioDto>>(playlist.Tracks);
+
+                    var track = tracks?.FirstOrDefault(x =>
+                        x.TitleNormalized == titleNormalized
+                        && Normalizer.ArtistEqual(artistNormalized, x.ArtistNormalized));
+
+                    if (track != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("found");
+
+                        group.Elements.Add(new ReportElement
+                        {
+                            PlaylistName = playlist.Name,
+                            PlaylistCoverPath = playlist.Cover,
+                            PlaylistLink = playlist.Link,
+                            TrackPosition = track.Position
+                        });
+                    }
+                }
+
+                reportContent.Groups.Add(group);
+            }
 
             string reportName = DateTime.Now.ToString("dd.MM.yyyy");
 
@@ -220,11 +238,10 @@ namespace KMChartsUpdater.BLL.Services
                 Name = reportName,
                 FileName = filename,
                 FilePath = "/Uploads/Reports/" + filename,
-                Playlists = playlistsJson,
                 Updated = DateTime.Now
             };
 
-            var pdf = new PdfReport(report);
+            var pdf = new PdfReport(reportContent);
             pdf.CreateAndSave(filename);
 
             return report;

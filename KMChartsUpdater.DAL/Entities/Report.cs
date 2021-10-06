@@ -10,8 +10,6 @@ namespace KMChartsUpdater.DAL.Entities
 
         public string FilePath { get; set; }
 
-        public string Playlists { get; set; } // JSON
-
         public DateTime Updated { get; set; }
 
         public virtual AudioTask AudioTask { get; set; }

@@ -1,9 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using KMChartsUpdater.BLL.DTO;
-using KMChartsUpdater.BLL.Utils.Extensions;
-using KMChartsUpdater.DAL.Entities;
-using Newtonsoft.Json;
+﻿using System.IO;
+using KMChartsUpdater.BLL.ReportGenerator;
 using PdfSharpCore.Drawing;
 using PdfSharpCore.Pdf;
 
@@ -11,13 +7,33 @@ namespace KMChartsUpdater.BLL.Infrastructure
 {
     public class PdfReport
     {
-        private readonly PdfDocument _document = new PdfDocument();
+        private readonly PdfDocument _document;
+        private readonly ReportContent _content;
 
-        private readonly Report _report;
+        private XGraphics _gfx;
 
-        public PdfReport(Report report)
+        private const double _coverSize = 50;
+        private const double _padding = 20;
+        private const double _fontSize = 14;
+        private const double _lineHeight = 20;
+
+        private double _leftColumnX;
+        private double _rightColumnX;
+        private double _rightColumnWidth;
+
+        private double _y;
+        private double _maxY;
+
+        private readonly XFont _regularFont = new XFont("OpenSans", 14, XFontStyle.Regular);
+        private readonly XFont _underlinedFont = new XFont("OpenSans", 14, XFontStyle.Underline);
+
+        private readonly  XPen _blackLine = new XPen(XColors.Black);
+
+        public PdfReport(ReportContent content)
         {
-            _report = report;
+            _content = content;
+
+            _document = new PdfDocument();
         }
 
         public void CreateAndSave(string filename)
@@ -25,78 +41,87 @@ namespace KMChartsUpdater.BLL.Infrastructure
             var currentDirectory = Directory.GetCurrentDirectory();
             var path = currentDirectory + "/Uploads/Reports/" + filename;
 
-            const double padding = 20;
-            const double fontSize = 14;
-            const double lineHeight = 20;
-            const double coverHeight = 50;
+            InitParams();
 
-            var gfx = CreateNewPage();
-
-            var regularFont = new XFont("OpenSans", fontSize, XFontStyle.Regular);
-            var blackLine = new XPen(XColors.Black);
-
-            double leftColumnX = padding + 65;
-            double rightColumnX = gfx.PdfPage.Width * 0.6;
-
-            double rightColumnWidth = gfx.PdfPage.Width - rightColumnX;
-
-            //int maxLength = (int)(rightColumnWidth / fontSize);
-
-            double maxY = gfx.PdfPage.Height - 110;
-
-            double y = 110;
-            double linkY = gfx.PdfPage.Height - y;
-
-            var playlists = GetReportPlaylists(_report);
-
-            foreach (var playlist in playlists)
+            foreach (var group in _content.Groups)
             {
-                //double stringWidth = playlist.Link.Length * fontSize;
-                //double linesCount = Math.Ceiling(stringWidth / rightColumnWidth);
-                //double linkHeight = linesCount * lineHeight;
+                if (group.Elements.Count < 1)
+                    continue;
 
-                double height = coverHeight;
-
-                if (y + height + 5 > maxY)
-                {
-                    gfx = CreateNewPage();
-                    y = 110;
-                    linkY = gfx.PdfPage.Height - y;
-                }
-
-                gfx.DrawLine(blackLine, padding, y, gfx.PdfPage.Width - padding, y);
-
-                y += 5;
-                linkY -= 5;
-
-                if (playlist.Cover != null)
-                {
-                    string coverFullPath = currentDirectory + playlist.Cover;
-                    XImage image = XImage.FromFile(coverFullPath);
-                    gfx.DrawImage(image, padding, y, coverHeight, coverHeight);
-                }
-
-                double textY = y + coverHeight / 2;
-                gfx.DrawString(playlist.Name + " (#" + playlist.Position + ")", regularFont, XBrushes.Black, leftColumnX, textY);
-
-                //string linkText = AddLineBreaks(playlist.Link, maxLength);
-                gfx.DrawLink("Перейти в плейлист", playlist.Link, rightColumnX, textY - fontSize, lineHeight, rightColumnWidth);
-
-                linkY -= height - fontSize;
-
-                var linkRect = new XRect(rightColumnX, linkY, rightColumnWidth, lineHeight);
-                gfx.PdfPage.AddWebLink(new PdfRectangle(linkRect), playlist.Link);
-
-                y += height + 5;
-                linkY -= 5 + fontSize;
+                DrawGroup(group);
             }
 
             _document.Save(path);
         }
 
+        private void InitParams()
+        {
+            _gfx = CreateNewPage();
+
+            _y = 110;
+            _maxY = _gfx.PdfPage.Height - _y;
+
+            _leftColumnX = _padding + 65;
+            _rightColumnX = _gfx.PdfPage.Width * 0.6;
+            _rightColumnWidth = _gfx.PdfPage.Width - _rightColumnX;
+        }
+
+        private void DrawGroup(ReportGroup group)
+        {
+            if (_y + _lineHeight + _coverSize + 10 > _maxY)
+            {
+                _gfx = CreateNewPage();
+                _y = 110;
+            }
+
+            _gfx.DrawString(group.Name, _regularFont, XBrushes.Black, new XRect(0, _y, _gfx.PdfPage.Width, _lineHeight),
+                XStringFormats.TopCenter);
+
+            _y += _lineHeight + 10;
+
+            foreach (var element in group.Elements)
+            {
+                if (_y + _coverSize + 5 > _maxY)
+                {
+                    _gfx = CreateNewPage();
+                    _y = 110;
+                }
+
+                DrawElement(element);
+
+                _y += _coverSize + 5;
+            }
+        }
+
+        private void DrawElement(ReportElement element)
+        {
+            _gfx.DrawLine(_blackLine, _padding, _y, _gfx.PdfPage.Width - _padding, _y);
+
+            _y += 5;
+
+            string coverFullPath = Directory.GetCurrentDirectory() + element.PlaylistCoverPath;
+            XImage image = XImage.FromFile(coverFullPath);
+
+            _gfx.DrawImage(image, _padding, _y, _coverSize, _coverSize);
+
+            double titleY = _y + _coverSize / 2;
+
+            var textRect = new XRect(_rightColumnX, titleY, _rightColumnWidth, _lineHeight);
+            var linkRectInv = new XRect(_rightColumnX, titleY - 14, _rightColumnWidth, _lineHeight);
+            var linkRect = _gfx.Transformer.WorldToDefaultPage(linkRectInv);
+
+            string text = $"{element.PlaylistName} (#{element.TrackPosition})";
+
+            _gfx.DrawString(text, _regularFont, XBrushes.Black, _leftColumnX, textRect.Y);
+            _gfx.DrawString("Перейти в плейлист", _underlinedFont, XBrushes.Blue, _rightColumnX, textRect.Y);
+
+            _gfx.PdfPage.AddWebLink(new PdfRectangle(linkRect), element.PlaylistLink);
+        }
+
         private XGraphics CreateNewPage()
         {
             var page = _document.AddPage();
+
             var gfx = XGraphics.FromPdfPage(page);
 
             DrawTitle(gfx);
@@ -105,23 +130,14 @@ namespace KMChartsUpdater.BLL.Infrastructure
             return gfx;
         }
 
-        private List<PlaylistDto> GetReportPlaylists(Report report)
-        {
-            var playlists = JsonConvert.DeserializeObject<List<PlaylistDto>>(report.Playlists);
-
-            return playlists;
-        }
-
         private void DrawTitle(XGraphics gfx)
         {
             var font = new XFont("OpenSans", 18, XFontStyle.Bold);
 
-            string title = _report.AudioTask.Audio.Artist + " - " + _report.AudioTask.Audio.Title;
-
-            gfx.DrawString(title, font, XBrushes.Black, new XRect(0, 30, gfx.PdfPage.Width, gfx.PdfPage.Height),
+            gfx.DrawString(_content.ReportTitle, font, XBrushes.Black, new XRect(0, 30, gfx.PdfPage.Width, gfx.PdfPage.Height),
                 XStringFormats.TopCenter);
 
-            gfx.DrawString(_report.Name, font, XBrushes.Black, new XRect(0, 55, gfx.PdfPage.Width, gfx.PdfPage.Height),
+            gfx.DrawString(_content.ReportSubtitle, font, XBrushes.Black, new XRect(0, 55, gfx.PdfPage.Width, gfx.PdfPage.Height),
                 XStringFormats.TopCenter);
         }
 
@@ -130,9 +146,10 @@ namespace KMChartsUpdater.BLL.Infrastructure
             string logoPath = Directory.GetCurrentDirectory() + "/Uploads/Static/logo-king.png";
 
             double logoHeight = 70;
-            double logoWidth = 60;
+            double logoWidth = 63;
 
             XImage image = XImage.FromFile(logoPath);
+
             gfx.DrawImage(image, 20, gfx.PdfPage.Height - logoHeight - 20, logoWidth, logoHeight);
         }
 

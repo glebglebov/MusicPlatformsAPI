@@ -9,5 +9,7 @@ namespace KMChartsUpdater.DAL.Entities
         public string Code { get; set; }
 
         public virtual ICollection<Chart> Charts { get; set; }
+
+        public virtual ICollection<Playlist> Playlists { get; set; }
     }
 }
