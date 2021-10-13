@@ -6,6 +6,8 @@ namespace KMChartsUpdater.BLL.Config
     {
         public ChartsData Charts { get; set; }
 
-        public Auth Auth { get; set; }
+        public Credentials Credentials { get; set; }
+
+        public Proxy[] Proxies { get; set; }
     }
 }

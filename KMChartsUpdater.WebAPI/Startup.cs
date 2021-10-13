@@ -10,6 +10,7 @@ using KMChartsUpdater.BLL.Services;
 using KMChartsUpdater.DAL;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
+using KMChartsUpdater.BLL.Adapters;
 using Microsoft.AspNetCore.Http;
 using KMChartsUpdater.BLL.Config;
 using KMChartsUpdater.BLL.Infrastructure;
@@ -48,13 +49,11 @@ namespace KMChartsUpdater.WebAPI
                 .AddTransient<ITaskService, TaskService>()
 
                 .AddTransient<UnitOfWork>()
+
+                .AddSingleton(Configuration.GetSection("MyConfig").Get<MyConfig>())
+
+                .AddTransient<IApiAdapterFactory, ApiAdapterFactory>()
             ;
-
-            var config = Configuration
-                .GetSection("MyConfig")
-                .Get<MyConfig>();
-
-            ApiFactory.SetConfig(config);
 
             services.AddCors();
             services.AddControllers();
