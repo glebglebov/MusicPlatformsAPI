@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using KMChartsUpdater.BLL.Charts.Models;
 using KMChartsUpdater.BLL.Interfaces;
-using KMChartsUpdater.BLL.YandexMusicApi;
+using YandexMusicApi;
 
 namespace KMChartsUpdater.BLL.Adapters
 {
@@ -10,14 +10,9 @@ namespace KMChartsUpdater.BLL.Adapters
     {
         private readonly YandexMusic _api;
 
-        public YandexMusicApiAdapter()
+        public YandexMusicApiAdapter(YandexMusic api)
         {
-            _api = new YandexMusic();
-        }
-
-        public void Auth()
-        {
-
+            _api = api;
         }
 
         public List<UnifiedAudioModel> GetChart(string type)

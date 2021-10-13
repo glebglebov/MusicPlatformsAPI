@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AppleMusicApi;
 using KMChartsUpdater.BLL.Charts.Models;
-using KMChartsUpdater.BLL.Config;
 using KMChartsUpdater.BLL.Interfaces;
 
 using AppleAlbum = AppleMusicApi.Models.Albums.Album;
@@ -13,17 +12,10 @@ namespace KMChartsUpdater.BLL.Adapters
     public class AppleMusicApiAdapter : IMusicApiAdapter
     {
         private readonly AppleMusic _api;
-        private readonly MyConfig _config;
 
-        public AppleMusicApiAdapter(MyConfig config)
+        public AppleMusicApiAdapter(AppleMusic api)
         {
-            _api = new AppleMusic();
-            _config = config;
-        }
-
-        public void Auth()
-        {
-            _api.Auth(_config.Auth.Apple.Key);
+            _api = api;
         }
 
         public List<UnifiedAudioModel> GetChart(string type)

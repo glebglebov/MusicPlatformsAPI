@@ -5,8 +5,6 @@ namespace KMChartsUpdater.BLL.Interfaces
 {
     public interface IMusicApiAdapter
     {
-        void Auth();
-
         List<UnifiedAudioModel> GetChart(string type);
 
         UnifiedPlaylistModel GetPlaylist(string playlistId);

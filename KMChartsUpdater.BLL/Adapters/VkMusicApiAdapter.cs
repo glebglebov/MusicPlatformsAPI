@@ -12,15 +12,10 @@ namespace KMChartsUpdater.BLL.Adapters
         private readonly VkAudioApi _api;
         private readonly MyConfig _config;
 
-        public VkMusicApiAdapter(MyConfig config)
+        public VkMusicApiAdapter(VkAudioApi api, MyConfig config)
         {
-            _api = new VkAudioApi();
+            _api = api;
             _config = config;
-        }
-
-        public void Auth()
-        {
-            _api.Auth(_config.Auth.Vk.Login, _config.Auth.Vk.Password);
         }
 
         public List<UnifiedAudioModel> GetChart(string type)
@@ -90,6 +85,20 @@ namespace KMChartsUpdater.BLL.Adapters
         public void GetAlbum(string albumId)
         {
             throw new NotImplementedException();
+        }
+
+        public void SetAccount(int accountIndex)
+        {
+            try
+            {
+                var vkCredentials = _config.Credentials.Vk[accountIndex];
+
+                _api.GetToken(vkCredentials.Login, vkCredentials.Password);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new Exception("can't set an account");
+            }
         }
     }
 }

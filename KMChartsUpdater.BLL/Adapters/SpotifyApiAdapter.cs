@@ -13,15 +13,10 @@ namespace KMChartsUpdater.BLL.Adapters
         private readonly Spotify _api;
         private readonly MyConfig _config;
 
-        public SpotifyApiAdapter(MyConfig config)
+        public SpotifyApiAdapter(Spotify api, MyConfig config)
         {
-            _api = new Spotify();
+            _api = api;
             _config = config;
-        }
-
-        public void Auth()
-        {
-            _api.Auth("02e781a4f005402f8f4ca505f5b1e6da", "2048ff16164f4558a76f659b4109a654");
         }
 
         public List<UnifiedAudioModel> GetChart(string type)
