@@ -11,20 +11,15 @@ namespace AppleMusicApi
 {
     public class AppleMusic
     {
-        private static readonly HttpClient _client;
+        private readonly HttpClient _client;
 
         private string _apiUrl { get; set; } = "https://api.music.apple.com/v1/";
 
         public string AccessToken { get; set; }
 
-        static AppleMusic()
+        public AppleMusic(HttpClient client)
         {
-            _client = new HttpClient();
-        }
-
-        public AppleMusic()
-        {
-
+            _client = client;
         }
 
         public void Auth(string token)

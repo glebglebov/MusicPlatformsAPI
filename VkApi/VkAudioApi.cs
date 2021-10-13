@@ -2,8 +2,9 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
-using VkApi.Infrastructure;
+using KMChartsUpdater.Common.Utils.Extensions;
 using VkApi.Models;
 using VkApi.Responses;
 
@@ -11,23 +12,18 @@ namespace VkApi
 {
     public class VkAudioApi
     {
-        private readonly HtmlLoader _loader;
+        private readonly HttpClient _client;
 
-        public VkApiSettings Settings { get; }
+        public VkApiSettings Settings { get; } = new VkApiSettings();
 
         public string AccessToken { get; set; }
 
-        public VkAudioApi()
+        public VkAudioApi(HttpClient client)
         {
-            Settings = new VkApiSettings();
-
-            _loader = new HtmlLoader
-            {
-                UserAgent = Settings.UserAgent
-            };
+            _client = client;
         }
 
-        public void Auth(string username, string password)
+        public void GetToken(string username, string password)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -58,7 +54,7 @@ namespace VkApi
                 { "access_token", AccessToken }
             };
 
-            return GetRepsonse<LikesGetListResponse>("likes.getList", parameters).Result;
+            return GetResponse<LikesGetListResponse>("likes.getList", parameters).Result;
         }
 
         public AudioCatalogAlbum GetPlaylistById(string ownerId, string playlistId, string accessKey = null)
@@ -71,7 +67,7 @@ namespace VkApi
                 { "access_token", AccessToken }
             };
 
-            return GetRepsonse<AudioCatalogAlbum>("audio.getPlaylistById", parameters).Result;
+            return GetResponse<AudioCatalogAlbum>("audio.getPlaylistById", parameters).Result;
         }
 
         public AudioCatalogAlbum GetPlaylistById(string id)
@@ -90,7 +86,7 @@ namespace VkApi
                 { "access_token", AccessToken }
             };
 
-            return GetRepsonse<GetSectionResponse>("catalog.getSection", parameters).Result;
+            return GetResponse<GetSectionResponse>("catalog.getSection", parameters).Result;
         }
 
         public GetSectionPlaylistsResponse GetAlbumsChartSection(string sectionId)
@@ -102,22 +98,22 @@ namespace VkApi
                 { "access_token", AccessToken }
             };
 
-            return GetRepsonse<GetSectionPlaylistsResponse>("catalog.getSection", parameters).Result;
+            return GetResponse<GetSectionPlaylistsResponse>("catalog.getSection", parameters).Result;
         }
 
-        public void GetBlockItems(string blockId)
-        {
-            var parameters = new Dictionary<string, string>
-            {
-                { "v", Settings.ApiVersion },
-                { "block_id", blockId },
-                { "access_token", AccessToken }
-            };
+        //public void GetBlockItems(string blockId)
+        //{
+        //    var parameters = new Dictionary<string, string>
+        //    {
+        //        { "v", Settings.ApiVersion },
+        //        { "block_id", blockId },
+        //        { "access_token", AccessToken }
+        //    };
 
-            JObject json = GetRepsonse("catalog.getBlockItems", parameters).Result;
+        //    JObject json = GetRepsonse("catalog.getBlockItems", parameters).Result;
 
-            string j = json["response"].ToString();
-        }
+        //    string j = json["response"].ToString();
+        //}
 
         public ExecuteGetPlaylistResponse ExecuteGetPlaylist(string id, string ownerId)
         {
@@ -129,7 +125,7 @@ namespace VkApi
                 { "access_token", AccessToken }
             };
 
-            return GetRepsonse<ExecuteGetPlaylistResponse>("execute.getPlaylist", parameters).Result;
+            return GetResponse<ExecuteGetPlaylistResponse>("execute.getPlaylist", parameters).Result;
         }
 
         public ExecuteGetPlaylistResponse ExecuteGetPlaylist(string id)
@@ -139,24 +135,13 @@ namespace VkApi
             return ExecuteGetPlaylist(ids[1], ids[0]);
         }
 
-        public async Task<JObject> GetRepsonse(string method, Dictionary<string, string> @params)
+        public async Task<T> GetResponse<T>(string method, Dictionary<string, string> @params)
         {
             string url = Settings.ApiUrl + method + $"?{string.Join("&", @params.Select(p => $"{p.Key}={p.Value}"))}";
 
-            string response = await _loader.GetHtmlResponse(url);
+            _client.AddHeader("User-Agent", Settings.UserAgent);
 
-            //System.Diagnostics.Debug.WriteLine(response);
-
-            JObject json = JObject.Parse(response);
-
-            return json;
-        }
-
-        public async Task<T> GetRepsonse<T>(string method, Dictionary<string, string> @params)
-        {
-            string url = Settings.ApiUrl + method + $"?{string.Join("&", @params.Select(p => $"{p.Key}={p.Value}"))}";
-
-            string response = await _loader.GetHtmlResponse(url);
+            string response = await _client.GetStringAsync(url);
 
             System.Diagnostics.Debug.WriteLine(response);
 
@@ -170,7 +155,10 @@ namespace VkApi
         {
             string url = Settings.AuthUrl + $"?{string.Join("&", @params.Select(p => $"{p.Key}={p.Value}"))}";
 
-            string response = _loader.GetHtmlResponse(url).Result;
+            _client.AddHeader("User-Agent", Settings.UserAgent);
+
+            string response = _client.GetStringAsync(url).Result;
+
             JObject json = JObject.Parse(response);
 
             AccessToken = json["access_token"]?.ToString();

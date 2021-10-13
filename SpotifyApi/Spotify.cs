@@ -12,21 +12,16 @@ namespace SpotifyApi
 {
     public class Spotify
     {
-        private static readonly HttpClient _client;
+        private readonly HttpClient _client;
 
         public string ApiUrl { get; set; } = "https://api.spotify.com/v1/";
         public string AuthUrl { get; set; } = "https://accounts.spotify.com/api/token";
 
         public string Token { get; set; }
 
-        static Spotify()
+        public Spotify(HttpClient client)
         {
-            _client = new HttpClient();
-        }
-
-        public Spotify()
-        {
-
+            _client = client;
         }
 
         public void Auth(string clientId, string clientSecret)
@@ -101,6 +96,7 @@ namespace SpotifyApi
                 RequestUri = new Uri(url),
                 Method = HttpMethod.Get
             };
+
             request.Headers.Add("Authorization", auth);
 
             var response = _client.SendAsync(request).Result;
@@ -128,6 +124,7 @@ namespace SpotifyApi
                 Method = HttpMethod.Post,
                 Content = formContent
             };
+
             request.Headers.Add("Authorization", auth);
 
             var response = _client.SendAsync(request).Result;
