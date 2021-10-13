@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="PdfSharpCore" Version="1.2.20" />
   </ItemGroup>
@@ -14,6 +15,7 @@
     <ProjectReference Include="..\KMChartsUpdater.DAL\KMChartsUpdater.DAL.csproj" />
     <ProjectReference Include="..\SpotifyApi\SpotifyApi.csproj" />
     <ProjectReference Include="..\VkApi\VkApi.csproj" />
+    <ProjectReference Include="..\YandexMusicApi\YandexMusicApi.csproj" />
   </ItemGroup>
 
 </Project>

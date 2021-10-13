@@ -8,6 +8,6 @@ namespace KMChartsUpdater.BLL.ReportGenerator
 
         public string ReportSubtitle { get; set; }
 
-        public List<ReportGroup> Groups { get; set; }
+        public List<PlaylistGroup> Groups { get; set; }
     }
 }

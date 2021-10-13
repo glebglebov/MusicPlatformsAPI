@@ -15,20 +15,23 @@ namespace KMChartsUpdater.BLL.Services
     {
         private readonly UnitOfWork _uow;
 
-        public ChartService(UnitOfWork uow)
+        private readonly IApiAdapterFactory _apiAdapterFactory;
+
+        public ChartService(UnitOfWork uow, IApiAdapterFactory apiAdapterFactory)
         {
             _uow = uow;
+            _apiAdapterFactory = apiAdapterFactory;
         }
 
         public GetChartFixResponse GetChart(int id, int offset, int limit, string date = null)
         {
             var chart = _uow.Charts.Get(id);
 
-            ChartFix lastChartFix = (date is null)
+            ChartFix lastChartFix = (date == null)
                 ? chart?.ChartFixes.OrderBy(x => x.Updated).LastOrDefault()
                 : chart?.ChartFixes.LastOrDefault(item => item.NormalDate == date);
 
-            if (lastChartFix is null)
+            if (lastChartFix == null)
                 return null;
 
             List<ChartItemDto> audios = new List<ChartItemDto>();
@@ -69,7 +72,7 @@ namespace KMChartsUpdater.BLL.Services
 
                 ChartItem item;
 
-                if (fix.Audio is null)
+                if (fix.Audio == null)
                 {
                     item = fix.Album;
                 }
@@ -122,11 +125,11 @@ namespace KMChartsUpdater.BLL.Services
 
             if (chart.Type == "audio")
             {
-                updater = new AudioChartUpdater(_uow);
+                updater = new AudioChartUpdater(_uow, _apiAdapterFactory);
             }
             else if (chart.Type == "album")
             {
-                updater = new AlbumChartUpdater(_uow);
+                updater = new AlbumChartUpdater(_uow, _apiAdapterFactory);
             }
             else
             {

@@ -18,9 +18,12 @@ namespace KMChartsUpdater.BLL.Services
     {
         private readonly UnitOfWork _uow;
 
-        public TaskService(UnitOfWork uow)
+        private readonly IApiAdapterFactory _apiAdapterFactory;
+
+        public TaskService(UnitOfWork uow, IApiAdapterFactory apiAdapterFactory)
         {
             _uow = uow;
+            _apiAdapterFactory = apiAdapterFactory;
         }
 
         public Response DeleteTask(int id)
@@ -157,12 +160,11 @@ namespace KMChartsUpdater.BLL.Services
 
         private List<Audio> GetAudiosFromPlaylist(string playlistId)
         {
-            var vkApi = ApiFactory.Instance.VkApi;
-            vkApi.Auth();
+            var vkApi = _apiAdapterFactory.CreateVkApiAdapter(false);
 
             var unifiedPlaylist = vkApi.GetPlaylist(playlistId);
 
-            var updater = new AudioChartUpdater(_uow);
+            var updater = new AudioChartUpdater(_uow, _apiAdapterFactory);
 
             List<Audio> audios = new List<Audio>();
 
@@ -184,7 +186,7 @@ namespace KMChartsUpdater.BLL.Services
             {
                 ReportTitle = reportTitle,
                 ReportSubtitle = reportSubtitle,
-                Groups = new List<ReportGroup>()
+                Groups = new List<PlaylistGroup>()
             };
 
             var platforms = _uow.Platforms.GetAll.ToList();
@@ -194,7 +196,7 @@ namespace KMChartsUpdater.BLL.Services
 
             foreach (var platform in platforms)
             {
-                var group = new ReportGroup
+                var group = new PlaylistGroup
                 {
                     Name = platform.Name,
                     Elements = new List<ReportElement>()

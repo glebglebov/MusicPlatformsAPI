@@ -1,4 +1,6 @@
-﻿namespace KMChartsUpdater.DAL.Entities
+﻿using System;
+
+namespace KMChartsUpdater.DAL.Entities
 {
     public class Playlist : Entity
     {
@@ -13,5 +15,7 @@
         public virtual Platform Platform { get; set; }
 
         public string Tracks { get; set; } // JSON
+
+        public DateTime Updated { get; set; }
     }
 }

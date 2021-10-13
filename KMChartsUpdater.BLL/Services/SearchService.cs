@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using KMChartsUpdater.BLL.Utils;
 using Newtonsoft.Json;
+using KMChartsUpdater.BLL.ReportGenerator;
 
 namespace KMChartsUpdater.BLL.Services
 {
@@ -83,50 +84,64 @@ namespace KMChartsUpdater.BLL.Services
             };
         }
 
-        public SearchResponse<PlaylistWithTracksDto> SearchInPlaylists(string query, int page)
+        public SearchResponse<Group<PlaylistWithTracksDto>> SearchInPlaylists(string query, int page)
         {
             int offset = page * 10;
 
             string queryNormalized = Normalizer.ArtistNormalize(query);
             queryNormalized = Normalizer.TitleNormalize(queryNormalized);
 
-            var playlists = _uow.Playlists.GetAll.ToList();
+            var items = new List<Group<PlaylistWithTracksDto>>();
 
-            var items = new List<PlaylistWithTracksDto>();
+            var platforms = _uow.Platforms.GetAll.ToList();
 
             const int maxCount = 100;
             int count = 0;
 
-            foreach (var playlist in playlists)
+            foreach (var platform in platforms)
             {
-                var allTracks = JsonConvert.DeserializeObject<List<PlaylistAudioDto>>(playlist.Tracks);
-
-                string pattern = @"\b" + queryNormalized + @"\b";
-
-                var tracks = allTracks
-                    ?.Where(x =>
-                        Regex.IsMatch(x.TitleNormalized, pattern)
-                        || Regex.IsMatch(x.ArtistNormalized, pattern))
-                    .ToList();
-
-                if (tracks == null || tracks.Count < 1)
+                if (platform.Playlists.Count < 1)
                     continue;
 
-                items.Add(new PlaylistWithTracksDto
+                var group = new Group<PlaylistWithTracksDto>()
                 {
-                    Name = playlist.Name,
-                    Link = playlist.Link,
-                    Cover = playlist.Cover,
-                    Tracks = tracks
-                });
+                    Name = platform.Name,
+                    Items = new List<PlaylistWithTracksDto>()
+                };
 
-                count += tracks.Count;
+                items.Add(group);
 
-                if (count >= maxCount)
-                    break;
+                foreach (var playlist in platform.Playlists)
+                {
+                    if (count >= maxCount)
+                        break;
+
+                    var allTracks = JsonConvert.DeserializeObject<List<PlaylistAudioDto>>(playlist.Tracks);
+
+                    string pattern = @"\b" + queryNormalized + @"\b";
+
+                    var tracks = allTracks
+                        ?.Where(x =>
+                            Regex.IsMatch(x.TitleNormalized, pattern)
+                            || Regex.IsMatch(x.ArtistNormalized, pattern))
+                        .ToList();
+
+                    if (tracks == null || tracks.Count < 1)
+                        continue;
+
+                    group.Items.Add(new PlaylistWithTracksDto
+                    {
+                        Name = playlist.Name,
+                        Link = playlist.Link,
+                        Cover = playlist.Cover,
+                        Tracks = tracks
+                    });
+
+                    count += tracks.Count;
+                }
             }
 
-            return new SearchResponse<PlaylistWithTracksDto>
+            return new SearchResponse<Group<PlaylistWithTracksDto>>
             {
                 Query = query,
                 Count = count,

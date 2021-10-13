@@ -2,7 +2,7 @@
 
 namespace KMChartsUpdater.BLL.ReportGenerator
 {
-    public class ReportGroup
+    public class PlaylistGroup
     {
         public string Name { get; set; }
 

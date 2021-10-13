@@ -12,7 +12,6 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
       "environmentVariables": {
         "WEBSITE_LOAD_USER_PROFILE": "1",
         "ASPNETCORE_ENVIRONMENT": "Development"

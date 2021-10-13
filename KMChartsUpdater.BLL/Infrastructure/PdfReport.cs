@@ -66,7 +66,7 @@ namespace KMChartsUpdater.BLL.Infrastructure
             _rightColumnWidth = _gfx.PdfPage.Width - _rightColumnX;
         }
 
-        private void DrawGroup(ReportGroup group)
+        private void DrawGroup(PlaylistGroup group)
         {
             if (_y + _lineHeight + _coverSize + 10 > _maxY)
             {

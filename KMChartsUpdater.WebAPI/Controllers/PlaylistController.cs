@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using KMChartsUpdater.BLL.DTO;
 using Microsoft.AspNetCore.Mvc;
 using KMChartsUpdater.BLL.Interfaces;
 using KMChartsUpdater.BLL.Responses;
@@ -16,6 +17,12 @@ namespace KMChartsUpdater.WebAPI.Controllers
         {
             _playlistService = playlistService;
             _securityService = securityService;
+        }
+
+        [HttpGet("")]
+        public List<PlaylistShortDto> Get()
+        {
+            return _playlistService.GetAll();
         }
 
         [HttpPost("update")]
