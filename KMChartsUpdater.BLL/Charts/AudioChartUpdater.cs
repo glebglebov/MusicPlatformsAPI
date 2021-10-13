@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using KMChartsUpdater.BLL.Charts.Models;
 using KMChartsUpdater.BLL.Infrastructure;
+using KMChartsUpdater.BLL.Interfaces;
 using KMChartsUpdater.BLL.Utils;
 using KMChartsUpdater.DAL;
 using KMChartsUpdater.DAL.Entities;
@@ -10,20 +10,16 @@ namespace KMChartsUpdater.BLL.Charts
 {
     public class AudioChartUpdater : ChartUpdater
     {
-        public AudioChartUpdater(UnitOfWork uow) : base(uow)
+        public AudioChartUpdater(UnitOfWork uow, IApiAdapterFactory apiFactory) : base(uow, apiFactory)
         {
 
         }
 
         public override void Update(Chart chart)
         {
-            var api = ApiFactory.GetByPlatformCode(chart.Platform.Code);
+            var api = GetApiInstance(chart);
 
-            if (api == null)
-                return;
-
-            api.Auth();
-            var items = api.GetChart(chart.Code);
+            var items = api?.GetChart(chart.Code);
 
             if (items == null)
                 return;
@@ -81,8 +77,8 @@ namespace KMChartsUpdater.BLL.Charts
 
         private Audio CreateAudio(UnifiedAudioModel item, string artistNormalized, string titleNormalized)
         {
-            //string thumb = ImgSaver.SaveFromUrl("/Uploads/", item.ThumbUrl);
-            string thumb = null;
+            string thumb = ImgSaver.SaveFromUrl("/Uploads/", item.ThumbUrl);
+            //string thumb = null;
 
             Audio audio = new Audio
             {
@@ -101,9 +97,7 @@ namespace KMChartsUpdater.BLL.Charts
 
         private string GetLabel(string artist, string title)
         {
-            var appleMusicApi = ApiFactory.Instance.AppleMusicApi;
-            appleMusicApi.Auth();
-
+            var appleMusicApi = ApiFactory.CreateAppleMusicApiAdapter(false);
             var album = appleMusicApi.SearchAlbum(artist, title);
 
             string label = album?.Attributes.RecordLabel;

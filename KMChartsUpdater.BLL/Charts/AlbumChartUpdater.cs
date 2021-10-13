@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using KMChartsUpdater.BLL.Charts.Models;
 using KMChartsUpdater.BLL.Infrastructure;
+using KMChartsUpdater.BLL.Interfaces;
 using KMChartsUpdater.DAL;
 using KMChartsUpdater.DAL.Entities;
 
@@ -9,21 +9,19 @@ namespace KMChartsUpdater.BLL.Charts
 {
     public class AlbumChartUpdater : ChartUpdater
     {
-        public AlbumChartUpdater(UnitOfWork uow) : base(uow)
+        public AlbumChartUpdater(UnitOfWork uow, IApiAdapterFactory apiFactory) : base(uow, apiFactory)
         {
 
         }
 
         public override void Update(Chart chart)
         {
-            var api = ApiFactory.GetByPlatformCode(chart.Platform.Code);
+            var api = GetApiInstance(chart);
 
-            if (api == null || chart.Type != "album")
+            var items = api?.GetAlbumChart(chart.Code);
+
+            if (items == null)
                 return;
-
-            api.Auth();
-
-            var items = api.GetAlbumChart(chart.Code);
 
             ChartFix lastChartFix = chart.ChartFixes
                 .OrderBy(x => x.Updated)
