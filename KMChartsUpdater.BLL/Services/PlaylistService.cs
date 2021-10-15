@@ -181,7 +181,7 @@ namespace KMChartsUpdater.BLL.Services
 
                 ++i;
 
-                Thread.Sleep(200);
+                Thread.Sleep(300);
             }
         }
 
